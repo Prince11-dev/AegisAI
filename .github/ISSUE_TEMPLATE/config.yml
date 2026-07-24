@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/Prince11-dev/aegis-ai/tree/main/architecture
+    about: Review the project documentation before opening an issue.
+
+  - name: 💬 Discussions
+    url: https://github.com/Prince11-dev/aegis-ai/discussions
+    about: Ask questions, share ideas, or start discussions with the community.
+
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/Prince11-dev/aegis-ai/security/advisories/new
+    about: Please report security vulnerabilities privately instead of creating a public issue.
