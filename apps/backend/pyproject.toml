@@ -1,126 +1,68 @@
-[build-system]
-requires = ["hatchling>=1.27.0"]
-build-backend = "hatchling.build"
+name: Continuous Integration
 
-[project]
-name = "aegisai-backend"
-version = "0.1.0"
-description = "Backend service for the AegisAI platform"
-readme = "README.md"
-requires-python = ">=3.12"
-license = { text = "MIT" }
+on:
+  push:
+    branches:
+      - main
+      - develop
 
-authors = [
-    { name = "Prince Kumar Giri" }
-]
+  pull_request:
+    branches:
+      - main
+      - develop
 
-keywords = [
-    "ai",
-    "genai",
-    "fastapi",
-    "rag",
-    "langgraph",
-    "llm",
-    "backend"
-]
+jobs:
+  backend:
+    name: Backend CI
 
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Framework :: FastAPI",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence"
-]
+    runs-on: ubuntu-latest
 
-dependencies = [
-    # Web Framework
-    "fastapi>=0.116.0",
-    "uvicorn[standard]>=0.35.0",
+    strategy:
+      matrix:
+        python-version: ["3.12"]
 
-    # Configuration
-    "pydantic>=2.11.0",
-    "pydantic-settings>=2.10.0",
-    "python-dotenv>=1.1.1",
+    defaults:
+      run:
+        working-directory: apps/backend
 
-    # Database
-    "sqlalchemy>=2.0.41",
-    "alembic>=1.16.4",
-    "psycopg[binary]>=3.2.9",
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # Redis
-    "redis>=6.2.0",
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: apps/backend/pyproject.toml
 
-    # Vector Database
-    "chromadb>=1.0.16",
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
-    # AI Framework
-    "langchain>=0.3.27",
-    "langgraph>=0.6.0",
+      - name: Install Backend & Development Dependencies
+        run: |
+          pip install -e ".[dev]"
 
-    # LLM Providers
-    "ollama>=0.5.1",
-    "openai>=1.99.1",
+      - name: Verify Installation
+        run: |
+          python --version
+          pip --version
+          black --version
+          ruff --version
+          pytest --version
 
-    # HTTP Client
-    "httpx>=0.28.1",
+      - name: Check Formatting (Black)
+        run: |
+          black --check .
 
-    # File Uploads
-    "python-multipart>=0.0.20",
+      - name: Lint (Ruff)
+        run: |
+          ruff check .
 
-    # Logging
-    "structlog>=25.4.0"
-]
+      - name: Type Checking (MyPy)
+        run: |
+          mypy app
 
-[project.optional-dependencies]
-dev = [
-    "black>=25.1.0",
-    "ruff>=0.12.4",
-    "mypy>=1.17.0",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "pre-commit>=4.2.0"
-]
-
-[tool.black]
-line-length = 88
-target-version = ["py312"]
-
-[tool.ruff]
-line-length = 88
-target-version = "py312"
-
-[tool.ruff.lint]
-select = [
-    "E",
-    "F",
-    "I",
-    "B"
-]
-
-ignore = []
-
-[tool.pytest.ini_options]
-testpaths = [
-    "tests"
-]
-
-python_files = [
-    "test_*.py"
-]
-
-asyncio_mode = "auto"
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-warn_unused_configs = true
-warn_return_any = true
-warn_unused_ignores = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["app"]
+      - name: Run Tests
+        run: |
+          pytest --cov=app --cov-report=term-missing
