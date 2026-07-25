@@ -33,15 +33,23 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
+          cache: pip
+          cache-dependency-path: apps/backend/pyproject.toml
 
       - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
+        run: python -m pip install --upgrade pip
 
-      - name: Install Backend
+      - name: Install Backend & Development Dependencies
         run: |
-          pip install -e .
+          pip install -e ".[dev]"
+
+      - name: Verify Installation
+        run: |
+          python --version
+          pip --version
+          black --version
+          ruff --version
+          pytest --version
 
       - name: Check Formatting (Black)
         run: |
@@ -51,6 +59,10 @@ jobs:
         run: |
           ruff check .
 
+      - name: Type Checking (MyPy)
+        run: |
+          mypy app
+
       - name: Run Tests
         run: |
-          pytest
+          pytest --cov=app --cov-report=term-missing
